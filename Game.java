@@ -1,50 +1,76 @@
 package hangman;
 
-import java.io.Console;
-import java.util.Scanner;
-
-
-public class Prompter {
-	Scanner scan = new Scanner(System.in);
-	private Game mGame;
+public class Game {
+	public static final int MAX_MISSES = 7;
+	private String mAnswer;
+	private String mHits;
+	private String mMisses;
 	
-	public Prompter(Game game){
-		mGame = game;
+	public Game(String answer){
+		mAnswer = answer;
+		mHits = "";
+		mMisses = "";
 	}
 	
-	public void play(){
-		while(mGame.getRemainingTries() > 0 && !mGame.isSolved()){
-			displayProgress();
-			promptForGuess();
-		}
-		
-		if(mGame.isSolved() ){
-			System.out.printf("Congrats you won with %d tries ramining", mGame.getRemainingTries() );
-		}
-		else{
-			System.out.printf("Bummer the word was %s. :(\n", mGame.getAnswer());
-		}
+	public Game(String[] arg) {
+		// TODO Auto-generated constructor stub
 	}
 
-	public boolean promptForGuess(){
-		boolean isHit = false;
-		boolean isValidGuess = false;
+	public char validateGuess(char letter){
 		
-		while(! isValidGuess){
-			System.out.println("Please Enter A letter: ");
-			String guessAsString = scan.nextLine();
-			try{
-				isHit = mGame.applyGuess(guessAsString);
-				isValidGuess = true;
-			}catch(IllegalArgumentException iae){
-				System.out.printf(" %s. Please try again.\n ", iae.getMessage());
-			}
+		if(!Character.isLetter(letter)){
+			throw new IllegalArgumentException("A letter is required");
+		}
+		letter = Character.toLowerCase(letter);
+		if(mMisses.indexOf(letter) >= 0 || mHits.indexOf(letter) >= 0){
+			throw new IllegalArgumentException(letter + " has already been guessed");
+		}
+		
+		return letter;
+	}
+	
+	public boolean applyGuess(String letter){
+		if(letter.length() == 0 ){
+			throw new IllegalArgumentException("No letter found");
+		}
+		return applyGuess(letter.charAt(0));
+	}
+	
+	public boolean applyGuess(char letter){
+		letter = validateGuess(letter);
+		boolean isHit = mAnswer.indexOf(letter) >=0;
+		if(isHit){
+			mHits += letter;
+		}
+		else
+		{
+			mMisses += letter;
 		}
 		return isHit;
 	}
 	
-	public void displayProgress(){
-		System.out.printf("You have  %d tries left to solve: %s\n",mGame.getRemainingTries(),mGame.getCurrentProgress());
+	public String getCurrentProgress(){
+		String progress= "";
+		
+		for(char letter : mAnswer.toCharArray()){
+			char display = '-';
+			if(mHits.indexOf(letter) >= 0){
+				display = letter;
+			}
+			progress += display;
+		}
+			return progress;
 	}
-
+	
+	public int getRemainingTries(){
+		return MAX_MISSES - mMisses.length();
+	}
+	
+	public String getAnswer(){
+		return mAnswer;
+	}
+	
+	public boolean isSolved(){
+		return getCurrentProgress().indexOf('-') == -1;
+	}
 }
